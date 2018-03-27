@@ -14,17 +14,19 @@ from sklearn import svm
 
 
 class classifier:
-    mt_covariance = []
-    mt_mean = []
+
 
     def __init__(self, labels):
+        self.mt_covariance = []
+        self.mt_mean = []
         self.labels = labels
+
 
     def train(self, data):
         """ trains the classifier with given data, constructs mean vectors """
         for i in range(len(data)):
             self.mt_covariance.append(covariance(data[i]))
-            self.mt_mean.append(avg(data[i]))
+            self.mt_mean.append(meanvec(data[i]))
 
     def test(self, data):
         """
@@ -44,6 +46,7 @@ class classifier:
                 decision[i][j] = self.labels[disc.index(maximum)]
                 if not disc.index(maximum) == i:
                     error += 1
+        # print(decision)
         return error
 
     def printclf(self):
@@ -63,14 +66,13 @@ class classifier:
             for j in range(len(mean)):
                 print("%.f" % mean[j])
 
-    def plotclf(self, totalsize):
+    def plotclf(self, totalsize, name):
         """
         plots data, samples and decision  boundaries
         :param totalsize: number of samples in the dataset
         :return:
         """
         samples = []
-        print(len(self.labels))
         samplesize = int(totalsize/len(self.labels))
 
         for i in range(len(self.mt_mean)):
@@ -90,17 +92,18 @@ class classifier:
                 Y.append(i)
 
         C = 1.0  # SVM regularization parameter
-        # clf = svm.SVC(kernel='rbf', gamma=0.02, C=C)
+        # clf = svm.SVC(kernel='rbf', gamma=.002, C=C)
         clf = svm.SVC(kernel='poly', degree=2, C=C)
         clf.fit(X, Y)
-
         X0, X1 = X[:, 0], X[:, 1]
         xx, yy = make_meshgrid(X0, X1)
         plot_contours(plt, clf, xx, yy, alpha=0.2)
+        # fig=plt.figure(name)
+        plt.title(name)
         plt.show()
 
-def make_meshgrid(x, y, h=.1):
 
+def make_meshgrid(x, y, h=.1):
     """Create a mesh of points to plot in
 
     Parameters
@@ -136,24 +139,7 @@ def plot_contours(ax, clf, xx, yy, **params):
     return out
 
 
-def main(data):
-    global traindata, testdata, categories
-    my_path = os.path.abspath(os.path.dirname(__file__))
-    data = os.path.join(my_path, "data/"+data)
-    traindata, testdata, categories = splitdata(data)
-
-    # Xk = traindata[n][k] where k, n = 0, 1, 2...
-    # k is the number of samples, n is the number of features
-
-    clf = classifier(categories)
-    clf.train(traindata)
-    error = clf.test(testdata)
-    accuracy = "%.2f" % ((1-(error/total(testdata))) * 100)
-    print("Data: ./data/", data, "> Accuracy (%):", accuracy, "[Errors: %d" % error, "/%d]" % total(testdata))
-    clf.printclf()
-    clf.plotclf(total(traindata))
-
-def avg(liste):
+def meanvec(liste):
     """
     # Finds the mean values for a list consists of n samples
     # num of elements in mean = num of features
@@ -172,7 +158,7 @@ def covariance(liste):
     """
     # Finds the covariance matrix of a list consists of n samples
     """
-    mean = avg(liste)
+    mean = meanvec(liste)
     mt_covariance = [[0 for i in mean] for m in mean];
     for sample in liste:
         element = [0 for i in range(len(sample))]
@@ -183,30 +169,6 @@ def covariance(liste):
                 mt_covariance[i][j] += (element[i] * element[j])/len(liste)
     return mt_covariance
 
-
-# def inverse(matrix):
-#     """
-#     Finds the inverse of a matrix
-#     :param matrix:      arr 2x2
-#     :return:            inverse matrix 2x2
-#     """
-#
-#     mt_inverse = [[1 for i in range(len(matrix))] for j in range(len(matrix))]
-#     for i in range(len(matrix)):
-#         for j in range(len(matrix)):
-#             if not i == j:
-#                 mt_inverse[i][j] = -matrix[i][j]
-#             else:
-#                 if i is 0:
-#                     mt_inverse[i][j] = matrix[1][1]
-#                 else:
-#                     mt_inverse[i][j] = matrix[0][0]
-#
-#     for i in range(len(mt_inverse)):
-#         for j in range(len(mt_inverse)):
-#             mt_inverse[i][j] /= np.linalg.det(matrix)
-#             mt_inverse[i][j] = round(mt_inverse[i][j], 2)
-#     return mt_inverse
 
 
 def discriminant(sample, class_ix, mt_cov, mean):
@@ -319,6 +281,22 @@ def splitdata(dataset):
     return train, test, labels
 
 
-main("data2.txt")
-# main("data1_fourclass.txt")
+
+def main(data):
+    global traindata, testdata, categories
+    my_path = os.path.abspath(os.path.dirname(__file__))
+    path = os.path.join(my_path, "data/"+data)
+    traindata, testdata, categories = splitdata(path)
+
+    # Xk = traindata[n][k] where k, n = 0, 1, 2...
+    # k is the number of samples, n is the number of features
+
+    clf = classifier(categories)
+    clf.train(traindata)
+    error = clf.test(testdata)
+    accuracy = "%.2f" % ((1-(error/total(testdata))) * 100)
+    print("Data: ./data/", data, "> Accuracy (%):", accuracy, "[Errors: %d" % error, "/%d]" % total(testdata))
+    clf.printclf()
+    clf.plotclf(total(traindata), data)
+
 
